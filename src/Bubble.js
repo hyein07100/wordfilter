@@ -1,25 +1,66 @@
-import React from 'react';
+import React, { useState } from 'react';
 import S from './style.js';
 import { useMessage } from './MessageContext'; 
+import axios from 'axios';
 
-const forbiddenWords = ["야해", "음탕", "덩어리","개","자식","미치","마귀","성기","돌은","거지"];
+const prohibitedWord = ["자식", "미치", "돌은", "거지", "개", "년", "시발"];
+const insultWord = ["씨발", "존나", "미친놈","썅","지랄","꺼져"]; 
 
 function Bubble() {
     const { message, setMessage, result, setResult } = useMessage(); 
-    const [messages, setMessages] = React.useState([]); 
+    const [messages, setMessages] = useState([]); 
 
-    const sendMessage = () => {
-        for (let word of forbiddenWords) {
-            if (message.includes(word)) {
-                setResult("금칙어 '"+word+"'(으)로 인해 전송이 불가합니다.");
+    async function analyzeMessage(message) {
+        const apiKey = 'AIzaSyBXapnrj-0_UrpSDIhT9flz_wc8zn-oWrA';  
+        const url = `https://language.googleapis.com/v1/documents:analyzeSentiment?key=${apiKey}`;
+        
+        const body = {
+            document: {
+                content: message,
+                type: 'PLAIN_TEXT',
+            },
+            encodingType: 'UTF8',
+        };
+        console.log("Request Body:", body);
+
+        try {
+            const response = await axios.post(url, body);
+            const sentimentScore = response.data.documentSentiment.score;
+            return { negative: sentimentScore < 0 };
+        } catch (error) {
+            console.error("NLP API 호출 오류:", error);
+        }
+    }
+
+    async function sendMessage() {
+        console.log("sendMessage 호출됨");   
+        const prohibitedWordIn = prohibitedWord.some(word => message.includes(word));
+        const insultWordin = insultWord.some(word => message.includes(word));
+    
+        // 욕설이 포함 되어 있는 경우
+        if (insultWordin) {
+            setResult("욕설이 포함되어 전송이 불가합니다.");
+            console.log("욕설 존재");
+            return;
+        }
+        // 금칙어가 포함 되어 있는 경우 -> 긍/부정 판단
+        if (prohibitedWordIn) {
+            const analysisResult = await analyzeMessage(message);
+            const negative = analysisResult.negative;
+    
+            if (negative) {
+                setResult("부정적인 의도로 판단되어 전송이 불가합니다.");
+                console.log("금칙어 존재 & 부정적 의도")
                 return;
+            } else {
+                console.log("금칙어가 포함되어 있으나 긍정적 의도이므로 전송됩니다.");
             }
         }
         setMessages([...messages, { text: message, isUser: true }]); 
         setMessage(''); 
         setResult(''); 
-    };
-
+        
+    }
     return (
         <S.Container>
             <S.Title><br/>가상의인물</S.Title>
@@ -32,7 +73,7 @@ function Bubble() {
                             <S.MessageText>안녕하세요 만나서 반갑습니다.</S.MessageText>
                         </S.MessageBubble>
                         <S.MessageBubble>
-                            <S.MessageText>저는 금칙어 설정 변경을 위해 만들어진 가상의 인물입니다. 저에게 금칙어가 포함된 단어는 전송하실 수 없습니다.</S.MessageText>
+                            <S.MessageText>저는 금칙어 설정 변경을 위해 만들어진 가상의 인물입니다. 저에겐 금칙어가 포함된 단어는 전송하실 수 없습니다.</S.MessageText>
                         </S.MessageBubble>
                     </div>
                 </S.MessageContainer>
