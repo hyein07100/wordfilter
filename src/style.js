@@ -2,7 +2,7 @@ import styled from 'styled-components';
 const S = {};
 
 S.Container = styled.div`
-    width: 468px;
+    width: 375px;
     min-height: 42rem; 
     max-height: 80vh; 
     background-color: #D3E9F5;
@@ -46,7 +46,7 @@ S.MessageBubble = styled.div`
     background-color: #ffffff;
     border-radius: 10px;
     padding: 10px;
-    max-width: 70%;
+    max-width: 80%;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     margin-bottom: 20px;
 `;
