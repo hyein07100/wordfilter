@@ -39,6 +39,7 @@ function Bubble() {
         try {
             const response = await axios.post(url, body);
             const sentimentScore = response.data.documentSentiment.score;
+            console.log("Sentiment Score:", sentimentScore);
             return { negative: sentimentScore < 0 };
         } catch (error) {
             console.error("NLP API 호출 오류:", error);
