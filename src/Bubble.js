@@ -1,14 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import S from './style.js';
 import { useMessage } from './MessageContext'; 
 import axios from 'axios';
 
-const prohibitedWord = ["자식", "미치", "돌은", "거지", "개", "년", "시발"];
-const insultWord = ["씨발", "존나", "미친놈","썅","지랄","꺼져"]; 
-
 function Bubble() {
     const { message, setMessage, result, setResult } = useMessage(); 
     const [messages, setMessages] = useState([]); 
+    const [prohibitedWords, setProhibitedWords] = useState([]);
+    const [insultWords, setInsultWords] = useState([]);
+
+    useEffect(() => {
+        const getWordsFromDB = async () => {
+            try {
+                const prohibitedResponse = await axios.get('http://localhost:5000/prohibited-words');
+                const insultResponse = await axios.get('http://localhost:5000/insult-words');
+                setProhibitedWords(prohibitedResponse.data);
+                setInsultWords(insultResponse.data);
+            } catch (error) {
+                console.error("단어를 가져오는 중 오류 발생:", error);
+            }
+        };
+        getWordsFromDB();
+    }, []);
 
     async function analyzeMessage(message) {
         const apiKey = 'AIzaSyBXapnrj-0_UrpSDIhT9flz_wc8zn-oWrA';  
@@ -34,8 +47,8 @@ function Bubble() {
 
     async function sendMessage() {
         console.log("sendMessage 호출됨");   
-        const prohibitedWordIn = prohibitedWord.some(word => message.includes(word));
-        const insultWordin = insultWord.some(word => message.includes(word));
+        const prohibitedWordIn = prohibitedWords.some(word => message.includes(word));
+        const insultWordin = insultWords.some(word => message.includes(word));
     
         // 욕설이 포함 되어 있는 경우
         if (insultWordin) {
@@ -59,8 +72,8 @@ function Bubble() {
         setMessages([...messages, { text: message, isUser: true }]); 
         setMessage(''); 
         setResult(''); 
-        
     }
+
     return (
         <S.Container>
             <S.Title><br/>가상의인물</S.Title>
